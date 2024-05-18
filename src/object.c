@@ -18,6 +18,8 @@ Clox_Object* Clox_Object_Allocate(Clox_VM* vm, Clox_Object_Type type, uint32_t s
 }
 
 void Clox_Object_Deallocate(Clox_VM* vm, Clox_Object* object) {
+    (void)vm; //NOTE(AAL): wtf?????? how is this unused
+    
     switch (object->type) {
         case CLOX_OBJECT_TYPE_STRING: /* fallthrough */
         case CLOX_OBJECT_TYPE_NATIVE: /* fallthrough */
@@ -33,9 +35,9 @@ void Clox_Object_Deallocate(Clox_VM* vm, Clox_Object* object) {
     }
 }
 
-static uint32_t fnv_1a(const char* key, int length) {
+static uint32_t fnv_1a(const char* key, uint32_t length) {
     uint32_t hash = 2166136261u;
-    for (int i = 0; i < length; i++) {
+    for (uint32_t i = 0; i < length; i++) {
         hash ^= (uint8_t)key[i];
         hash *= 16777619;
     }
@@ -77,7 +79,7 @@ void Clox_Object_Print(Clox_Object const* const object) {
         } break;
         case CLOX_OBJECT_TYPE_NATIVE: {
             Clox_Native* native = (Clox_Native*)object;
-            printf("<native %p>", native->function);
+            printf("<native 0x%lX>", (uintptr_t)native->function);
         } break;
         case CLOX_OBJECT_TYPE_CLOSURE: {
             Clox_Closure* fn = (Clox_Closure*)object;
@@ -111,7 +113,11 @@ Clox_Native* Clox_Native_Create(Clox_VM* vm, Clox_Native_Fn lambda) {
 
 Clox_Closure* Clox_Closure_Create(Clox_VM* vm, Clox_Function* function) {
 
-    Clox_Closure* closure = (Clox_Closure*)Clox_Object_Allocate(vm, CLOX_OBJECT_TYPE_CLOSURE, sizeof(Clox_Closure) + sizeof(Clox_UpvalueObj*) * function->upvalue_count);
+    Clox_Closure* closure = (Clox_Closure*)Clox_Object_Allocate(
+        vm,
+        CLOX_OBJECT_TYPE_CLOSURE,
+        (uint32_t)(sizeof(Clox_Closure) + sizeof(Clox_UpvalueObj*) * (uint64_t)function->upvalue_count)
+    );
     closure->function = function;
     closure->upvalue_count = function->upvalue_count;
 

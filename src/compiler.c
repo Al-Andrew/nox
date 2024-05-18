@@ -56,7 +56,7 @@ static void Clox_Compiler_Init(Clox_Parser* parser, Clox_Compiler* compiler, Clo
 
     parser->compiler = compiler;
     if (type != CLOX_FUNCTION_TYPE_SCRIPT) {
-        parser->compiler->function->name = Clox_String_Create(parser->vm, parser->previous.start, parser->previous.length);
+        parser->compiler->function->name = Clox_String_Create(parser->vm, parser->previous.start, (uint32_t)parser->previous.length);
     }
     Clox_Local* local = &parser->compiler->locals[parser->compiler->localCount++];
     local->depth = 0;
@@ -220,7 +220,7 @@ static Clox_Chunk* Clox_Compiler_Current_Chunk(Clox_Parser* parser) {
 
 static inline void Clox_Compiler_Emit_Byte(Clox_Parser* parser, uint8_t byte) {
 
-    Clox_Chunk_Push(Clox_Compiler_Current_Chunk(parser), byte, parser->previous.line);
+    Clox_Chunk_Push(Clox_Compiler_Current_Chunk(parser), byte, (uint32_t)parser->previous.line);
 }
 
 static inline void Clox_Compiler_Emit_Bytes(Clox_Parser* parser, uint32_t count, ...) {
@@ -229,15 +229,15 @@ static inline void Clox_Compiler_Emit_Bytes(Clox_Parser* parser, uint32_t count,
     va_start(args, count);
  
     for(unsigned int i = 0; i < count; ++i) {
-        uint8_t byte = va_arg(args, int);
-        Clox_Chunk_Push(Clox_Compiler_Current_Chunk(parser), byte, parser->previous.line);
+        uint8_t byte = (uint8_t)va_arg(args, int);
+        Clox_Chunk_Push(Clox_Compiler_Current_Chunk(parser), byte, (uint32_t)parser->previous.line);
     }
  
     va_end(args);
 }
 
 static inline uint8_t Clox_Compiler_Make_Constant(Clox_Parser* parser, Clox_Value value) {
-  int constant = Clox_Chunk_Push_Constant(Clox_Compiler_Current_Chunk(parser), value);
+  int constant = (int)Clox_Chunk_Push_Constant(Clox_Compiler_Current_Chunk(parser), value);
   
   if (constant > UINT8_MAX) {
     Clox_Compiler_Error_At_Token(parser, &parser->previous, "Too many constants in one chunk.");
@@ -259,7 +259,16 @@ static inline void Clox_Compiler_Compile_Number(Clox_Parser* parser, bool can_as
 
 static inline void Clox_Compiler_Compile_String(Clox_Parser* parser, bool can_assign) {
     (void)can_assign;
-    Clox_Compiler_Emit_Constant(parser, CLOX_VALUE_OBJECT(Clox_String_Create(parser->vm, parser->previous.start + 1, parser->previous.length - 2)));
+    Clox_Compiler_Emit_Constant(
+        parser,
+        CLOX_VALUE_OBJECT(
+            Clox_String_Create(
+                parser->vm,
+                parser->previous.start + 1,
+                (uint32_t)parser->previous.length - 2
+            )
+        )
+    );
 }
 
 static inline void Clox_Compiler_Compile_Literal(Clox_Parser* parser, bool can_assign) {
@@ -405,25 +414,25 @@ static void Clox_Compiler_Compile_Statement(Clox_Parser* parser);
 
 static int Clox_Compiler_Emit_Jump(Clox_Parser* parser, uint8_t instruction) {
     Clox_Compiler_Emit_Bytes(parser, 3, instruction, 0xff, 0xff);
-    return Clox_Compiler_Current_Chunk(parser)->used - 2;
+    return (int)Clox_Compiler_Current_Chunk(parser)->used - 2;
 }
 
 static void Clox_Compiler_Patch_Jump(Clox_Parser* parser, int offset) {
     // NOTE(Al-Andrew): -2 to adjust for the bytecode for the jump offset itself.
-    int jump = Clox_Compiler_Current_Chunk(parser)->used - offset - 2;
+    int jump = (int)Clox_Compiler_Current_Chunk(parser)->used - offset - 2;
 
     if (jump > UINT16_MAX) {
         Clox_Compiler_Error(parser, "Too much code to jump over.");
     }
 
-    Clox_Compiler_Current_Chunk(parser)->code[offset] = (jump >> 8) & 0xff;
-    Clox_Compiler_Current_Chunk(parser)->code[offset + 1] = jump & 0xff;
+    Clox_Compiler_Current_Chunk(parser)->code[offset] = (uint8_t)((jump >> 8) & 0xff);
+    Clox_Compiler_Current_Chunk(parser)->code[offset + 1] = (uint8_t)((jump) & 0xff);
 }
 
 static void Clox_Compiler_Emit_Loop(Clox_Parser* parser, int loop_start) {
     Clox_Compiler_Emit_Byte(parser, OP_LOOP);
 
-    int offset = Clox_Compiler_Current_Chunk(parser)->used - loop_start + 2;
+    int offset = (int)Clox_Compiler_Current_Chunk(parser)->used - loop_start + 2;
     if (offset > UINT16_MAX) {
         Clox_Compiler_Error(parser, "Loop body too large.");
     }
@@ -451,7 +460,7 @@ static void Clox_Compiler_Compile_If_Statement(Clox_Parser* parser) {
 }
 
 static void Clox_Copmiler_Compile_While_Statement(Clox_Parser* parser) {
-    int loopStart = Clox_Compiler_Current_Chunk(parser)->used;
+    int loopStart = (int)Clox_Compiler_Current_Chunk(parser)->used;
     Clox_Compiler_Consume(parser, CLOX_TOKEN_LEFT_PAREN, "Expect '(' after 'if'.");
     Clox_Compiler_Compile_Expression(parser);
     Clox_Compiler_Consume(parser, CLOX_TOKEN_RIGHT_PAREN, "Expect ')' after condition."); 
@@ -478,7 +487,7 @@ static void Clox_Copmiler_Compile_For_Statement(Clox_Parser* parser) {
     } else {
         Clox_Compiler_Compile_Expression_Statement(parser);
     }
-    int loopStart = Clox_Compiler_Current_Chunk(parser)->used;
+    int loopStart = (int)Clox_Compiler_Current_Chunk(parser)->used;
 
     int exitJump = -1;
     if (!Clox_Compiler_Match(parser,CLOX_TOKEN_SEMICOLON)) {
@@ -491,7 +500,7 @@ static void Clox_Copmiler_Compile_For_Statement(Clox_Parser* parser) {
     }
     if (!Clox_Compiler_Match(parser, CLOX_TOKEN_RIGHT_PAREN)) {
         int bodyJump = Clox_Compiler_Emit_Jump(parser, OP_JUMP);
-        int incrementStart = Clox_Compiler_Current_Chunk(parser)->used;
+        int incrementStart = (int)Clox_Compiler_Current_Chunk(parser)->used;
         Clox_Compiler_Compile_Expression(parser);
         Clox_Compiler_Emit_Byte(parser, OP_POP);
         Clox_Compiler_Consume(parser, CLOX_TOKEN_RIGHT_PAREN, "Expect ')' after for clauses.");
@@ -576,7 +585,16 @@ static void Clox_Compiler_Synchronize(Clox_Parser* parser) {
 }
 
 static uint8_t Clox_Compiler_Emit_Identifier_Constant(Clox_Parser* parser) {
-    return Clox_Compiler_Make_Constant(parser ,CLOX_VALUE_OBJECT(Clox_String_Create(parser->vm, parser->previous.start, parser->previous.length)));
+    return Clox_Compiler_Make_Constant(
+        parser,
+        CLOX_VALUE_OBJECT(
+            Clox_String_Create(
+                parser->vm,
+                parser->previous.start,
+                (uint32_t)parser->previous.length
+            )
+        )
+    );
 }
 
 static void Clox_Compiler_Mark_Local_Initialized(Clox_Parser* parser) {
@@ -598,7 +616,7 @@ static void Clox_Compiler_Add_Local(Clox_Parser* parser, Clox_Token token) {
 
 static bool Clox_Identifiers_Compare(Clox_Token* a, Clox_Token* b) {
     if (a->length != b->length) return a->length - b->length;
-    return memcmp(a->start, b->start, a->length);
+    return memcmp(a->start, b->start, (size_t)a->length);
 }
 
 static void Clox_Compiler_Declare_Variable(Clox_Parser* parser) {
@@ -800,6 +818,7 @@ static void Clox_Compiler_Compile_And_(Clox_Parser* parser, bool can_assign) {
 }
 
 static void Clox_Compiler_Compile_Or_(Clox_Parser* parser, bool can_assign) {
+    (void)can_assign;
     int elseJump = Clox_Compiler_Emit_Jump(parser, OP_JUMP_IF_FALSE);
     int endJump = Clox_Compiler_Emit_Jump(parser, OP_JUMP);
 

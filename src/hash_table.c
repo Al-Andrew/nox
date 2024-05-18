@@ -73,7 +73,7 @@ static Clox_Hash_Table_Entry* Clox_Hash_Table_Find_Entry_In_List(Clox_Hash_Table
 }
 
 static void Clox_Hash_Table_Adjust_Capacity(Clox_Hash_Table* table, int new_capacity) {
-    Clox_Hash_Table_Entry* entries = (Clox_Hash_Table_Entry*)reallocate(NULL, 0, sizeof(Clox_Hash_Table_Entry) * new_capacity);
+    Clox_Hash_Table_Entry* entries = (Clox_Hash_Table_Entry*)reallocate(NULL, 0, sizeof(Clox_Hash_Table_Entry) * (uint64_t)new_capacity);
     for (int i = 0; i < new_capacity; i++) {
         entries[i].key = NULL;
         entries[i].value = CLOX_VALUE_NIL;
@@ -84,7 +84,7 @@ static void Clox_Hash_Table_Adjust_Capacity(Clox_Hash_Table* table, int new_capa
         Clox_Hash_Table_Entry* entry = &table->entries[i];
         if (entry->key == NULL) continue;
 
-        Clox_Hash_Table_Entry* dest = Clox_Hash_Table_Find_Entry_In_List(entries, new_capacity, entry->key);
+        Clox_Hash_Table_Entry* dest = Clox_Hash_Table_Find_Entry_In_List(entries, (uint32_t)new_capacity, entry->key);
         dest->key = entry->key;
         dest->value = entry->value;
         table->used++;
@@ -92,7 +92,7 @@ static void Clox_Hash_Table_Adjust_Capacity(Clox_Hash_Table* table, int new_capa
     deallocate(table->entries);
 
     table->entries = entries;
-    table->allocated = new_capacity;
+    table->allocated = (uint32_t)new_capacity;
 }
 
 void Clox_Hash_Table_Print(Clox_Hash_Table* table) {
@@ -113,7 +113,7 @@ void Clox_Hash_Table_Print(Clox_Hash_Table* table) {
 bool Clox_Hash_Table_Set(Clox_Hash_Table* table, Clox_String* key, Clox_Value value) {
     if ((table->used + 1) > (table->allocated * CLOX_HASH_TABLE_MAX_LOAD)) {
         uint32_t capacity = table->allocated==0?8:table->allocated * 2;
-        Clox_Hash_Table_Adjust_Capacity(table, capacity);
+        Clox_Hash_Table_Adjust_Capacity(table, (int)capacity);
     }
 
     Clox_Hash_Table_Entry* entry = Clox_Hash_Table_Find_Entry(table, key);

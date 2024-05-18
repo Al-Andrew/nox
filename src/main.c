@@ -38,7 +38,7 @@ int Clox_Repl() {
             break;
         }
 
-        if(s8_compare((s8){.len = (int)strlen(line) - 1, .string = line}, s8$("exit")) == 0) {
+        if(s8_compare((s8){.len = (uint32_t)strlen(line) - 1, .string = line}, s8$("exit")) == 0) {
             break;
         }
 
@@ -57,7 +57,7 @@ char* Clox_Read_File(const char* path_to_file) {
     }
 
     fseek(file, 0L, SEEK_END);
-    size_t fileSize = ftell(file);
+    size_t fileSize = (size_t)ftell(file);
     rewind(file);
 
     char* buffer = (char*)reallocate(NULL, 0, fileSize + 1);

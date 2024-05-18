@@ -178,7 +178,7 @@ uint32_t Clox_Chunk_Print_Op_Code(Clox_Chunk* const chunk, uint32_t const offset
             uint16_t jump = (uint16_t)(chunk->code[offset + 1] << 8);
             jump |= chunk->code[offset + 2];
             int sign = 1;
-            uint32_t target = offset + 3 + sign * jump;
+            uint32_t target = (uint32_t)((int32_t)(offset + 3) + sign * jump);
             printf("%-16s %4d -> %04X\n", "OP_JUMP_IF_FALSE", offset, target);
             return offset + 3;
         } break;
@@ -186,7 +186,7 @@ uint32_t Clox_Chunk_Print_Op_Code(Clox_Chunk* const chunk, uint32_t const offset
             uint16_t jump = (uint16_t)(chunk->code[offset + 1] << 8);
             jump |= chunk->code[offset + 2];
             int sign = 1;
-            uint32_t target = offset + 3 + sign * jump;
+            uint32_t target = (uint32_t)((int32_t)(offset + 3) + sign * jump);
             printf("%-16s %4d -> %04X\n", "OP_JUMP", offset, target);
             return offset + 3;
         } break;
@@ -194,7 +194,7 @@ uint32_t Clox_Chunk_Print_Op_Code(Clox_Chunk* const chunk, uint32_t const offset
             uint16_t jump = (uint16_t)(chunk->code[offset + 1] << 8);
             jump |= chunk->code[offset + 2];
             int sign = -1;
-            uint32_t target = offset + 3 + sign * jump;
+            uint32_t target = (uint32_t)((int32_t)(offset + 3) + sign * jump);
             printf("%-16s %4d -> %04X\n", "OP_LOOP", offset, target);
             return offset + 3;
         } break;
@@ -211,12 +211,12 @@ uint32_t Clox_Chunk_Print_Op_Code(Clox_Chunk* const chunk, uint32_t const offset
 
             Clox_Function* function = (Clox_Function*)(chunk->constants.values[constant].object);
             for (int j = 0; j < function->upvalue_count; j++) {
-                int isLocal = chunk->code[offset + j*2];
-                int index = chunk->code[offset + j*2 + 1];
-                printf("%04d    |                     %s %d\n", offset + j , isLocal ? "local" : "upvalue", index);
+                int isLocal = chunk->code[offset + (uint32_t)j*2];
+                int index = chunk->code[offset + (uint32_t)j*2 + 1];
+                printf("%04d    |                     %s %d\n", offset + (uint32_t)j , isLocal ? "local" : "upvalue", index);
             }
 
-            return offset + 2 + function->upvalue_count*2;
+            return offset + 2 + (uint32_t)(function->upvalue_count*2);
         } break;
         case OP_GET_UPVALUE: {
             uint8_t var_name_idx = chunk->code[offset + 1];

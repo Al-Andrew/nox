@@ -42,7 +42,7 @@ struct Clox_String {
     Clox_Object obj;
     uint32_t hash;
     uint32_t length;
-    char characters[0];
+    char characters[1];
 };
 
 Clox_String* Clox_String_Create(Clox_VM* vm, const char* string, uint32_t len);

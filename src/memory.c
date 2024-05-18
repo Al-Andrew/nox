@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 void* reallocate(void* old_ptr, size_t old_size, size_t new_size) {
-
+    (void)old_size;
     void* result = realloc(old_ptr, new_size);
 
     if(result == NULL) {
@@ -26,9 +26,10 @@ void deallocate(void* ptr) {
 #endif // CLOX_DEBUG_LOG_GC
 
 void Clox_VM_GC(Clox_VM* vm) {
+    (void)vm;
 
-    DEBUG_GC_PRINT("-- GC START");
+    DEBUG_GC_PRINT("-- GC START", "");
 
 
-    DEBUG_GC_PRINT("-- GC END");
+    DEBUG_GC_PRINT("-- GC END", "");
 }

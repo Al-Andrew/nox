@@ -7,7 +7,7 @@ int s8_compare(s8 s1, s8 s2) {
     }
 
     int idx = 0;
-    int min_idx = s1.len > s2.len?s2.len:s1.len;
+    int min_idx = (int)(s1.len > s2.len ? s2.len : s1.len);
     while(idx < min_idx) {
         int diff = s1.string[idx] - s2.string[idx];
         if( diff != 0 ) {
@@ -16,5 +16,5 @@ int s8_compare(s8 s1, s8 s2) {
         ++idx;
     }
 
-    return s1.len - s2.len;
+    return (int)(s1.len - s2.len);
 }

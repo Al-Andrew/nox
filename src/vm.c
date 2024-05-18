@@ -17,6 +17,8 @@ void Clox_VM_Reset_Stack(Clox_VM* vm) {
 
 
 Clox_Value clock_native(int argc, Clox_Value* argv) {
+    (void)argc;
+    (void)argv;
     return CLOX_VALUE_NUMBER((double)clock() / CLOCKS_PER_SEC);
 }
 
@@ -82,7 +84,7 @@ static Clox_Interpret_Result Clox_VM_Runtime_Error(Clox_VM* vm, char const* cons
     for (int i = vm->call_frame_count - 1; i >= 0; i--) {
         Clox_Call_Frame* frame = &vm->frames[i];
         Clox_Function* function = frame->closure->function;
-        size_t instruction = frame->instruction_pointer - function->chunk.code - 1;
+        size_t instruction = (size_t)(frame->instruction_pointer - function->chunk.code - 1);
         fprintf(stderr, "[line %d] in ", function->chunk.source_lines[instruction]);
         if (function->name == NULL) {
             fprintf(stderr, "script\n");
@@ -134,7 +136,7 @@ static bool Clox_VM_Call_Value(Clox_VM* vm, Clox_Value callee, int argCount) {
 }
 
 void Clox_VM_Define_Native(Clox_VM* vm, const char* name, Clox_Native_Fn function) {
-    Clox_VM_Stack_Push(vm, CLOX_VALUE_OBJECT(Clox_String_Create(vm, name, (int)strlen(name))));
+    Clox_VM_Stack_Push(vm, CLOX_VALUE_OBJECT(Clox_String_Create(vm, name, (uint32_t)strlen(name))));
     Clox_VM_Stack_Push(vm, CLOX_VALUE_OBJECT(Clox_Native_Create(vm, function)));
     Clox_Hash_Table_Set(&vm->globals, (Clox_String*)vm->stack[0].object, vm->stack[1]);
     Clox_VM_Stack_Pop(vm);
@@ -143,6 +145,7 @@ void Clox_VM_Define_Native(Clox_VM* vm, const char* name, Clox_Native_Fn functio
 
 Clox_Interpret_Result Clox_VM_Interpret_Function(Clox_VM* const vm, Clox_Function* function) {
     // vm->chunk = chunk;
+    (void)function; //NOTE(AAL): why the fuck do we have this param if we don't use it at all?
 
     Clox_Call_Frame* frame = &vm->frames[vm->call_frame_count - 1];
     #define READ_BYTE() (*frame->instruction_pointer++)
@@ -312,7 +315,16 @@ Clox_Interpret_Result Clox_VM_Interpret_Function(Clox_VM* const vm, Clox_Functio
                                 Clox_String* lhs_string = (Clox_String*)lhs.object;
                                 Clox_String* rhs_string = (Clox_String*)rhs.object;
 
-                                bool result = s8_compare((s8){.len = lhs_string->length, .string = lhs_string->characters}, (s8){.len = rhs_string->length, .string = rhs_string->characters}) == 0;
+                                bool result = s8_compare(
+                                    (s8){
+                                        .len = lhs_string->length,
+                                        .string = lhs_string->characters
+                                    },
+                                    (s8){
+                                        .len = rhs_string->length,
+                                        .string = rhs_string->characters
+                                    }
+                                ) == 0;
                                 Clox_VM_Stack_Push(vm, CLOX_VALUE_BOOL(result));
                             }break;
                             default: {
@@ -409,8 +421,8 @@ Clox_Interpret_Result Clox_VM_Interpret_Function(Clox_VM* const vm, Clox_Functio
                 frame->instruction_pointer -= offset;
             } break;
             case OP_CALL: {
-                int argCount = READ_BYTE();
-                if (!Clox_VM_Call_Value(vm, Clox_VM_Stack_Peek(vm, argCount), argCount)) {
+                uint32_t argCount = (uint32_t)READ_BYTE();
+                if (!Clox_VM_Call_Value(vm, Clox_VM_Stack_Peek(vm, argCount), (int)argCount)) {
                     return Clox_VM_Runtime_Error(vm, "Error while trying to call.");
                 }
                 frame = &vm->frames[vm->call_frame_count - 1];

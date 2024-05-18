@@ -18,7 +18,7 @@
 
 typedef struct {
     const char* string;
-    int len;
+    uint32_t len;
 } s8;
 
 #define s8$(str) (s8){.string = str, .len = sizeof(str) - 1}

@@ -148,7 +148,10 @@ static const s8 s_clox_keywords[] = {
 
 static inline Clox_Token_Type Clox_Scanner_Get_Identifier_Type(Clox_Scanner* scanner) {
         
-    const s8 ident = {.string = scanner->start, .len = (int)((unsigned long long)scanner->current - (unsigned long long)scanner->start)};
+    const s8 ident = {
+        .string = scanner->start,
+        .len = (uint32_t)((unsigned long long)scanner->current - (unsigned long long)scanner->start)
+    };
 
     for(unsigned int i = 0; i < static_array_count$(s_clox_keywords); ++i) {
         s8 potential = s_clox_keywords[i];

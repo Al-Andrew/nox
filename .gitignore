@@ -1,9 +1,6 @@
-# Xmake cache
-.xmake/
-build/
+# build artifacts
 
-# MacOS Cache
-.DS_Store
+bin/
 
 # ide stuff
 .vscode/

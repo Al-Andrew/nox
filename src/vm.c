@@ -6,6 +6,7 @@
 #include <string.h>
 #include <time.h>
 #include "memory.h"
+#include "value.h"
 
 
 void Clox_VM_Reset_Stack(Clox_VM* vm) {
@@ -43,6 +44,8 @@ void Clox_VM_Delete(Clox_VM* const vm) {
 static inline void Clox_VM_Stack_Push(Clox_VM* const vm, Clox_Value const value) {
     *(vm->stack_top++) = value;
 }
+
+Clox_Value CLox_VM_Stack_Pop(Clox_VM* const vm);
 
 static inline Clox_Value Clox_VM_Stack_Pop(Clox_VM* const vm) {
     return *(--vm->stack_top);
@@ -417,13 +420,16 @@ Clox_Interpret_Result Clox_VM_Interpret_Function(Clox_VM* const vm, Clox_Functio
                 Clox_Closure* closure = Clox_Closure_Create(vm, function);
                 Clox_VM_Stack_Push(vm, CLOX_VALUE_OBJECT(closure));
 
-                for (int i = 0; i < closure->upvalue_count; i++) {
-                    uint8_t isLocal = READ_BYTE();
-                    uint8_t index = READ_BYTE();
-                    if (isLocal) {
-                        closure->upvalues[i] = Clox_Closure_Capture_Upvalue(vm, frame->slots + index);
-                    } else {
-                        closure->upvalues[i] = frame->closure->upvalues[index];
+                {
+                    int i = 0;
+                    for (i = 0; i < closure->upvalue_count; i++) {
+                        uint8_t isLocal = READ_BYTE();
+                        uint8_t index = READ_BYTE();
+                        if (isLocal) {
+                            closure->upvalues[i] = Clox_Closure_Capture_Upvalue(vm, frame->slots + index);
+                        } else {
+                            closure->upvalues[i] = frame->closure->upvalues[index];
+                        }
                     }
                 }
 

@@ -7,6 +7,16 @@
 #include <string.h>
 #include "memory.h"
 
+#include "chunk.c"
+#include "common.c"
+#include "compiler.c"
+#include "hash_table.c"
+#include "memory.c"
+#include "object.c"
+#include "scanner.c"
+#include "value.c"
+#include "vm.c"
+
 int Clox_Print_Help() {
 
     printf("clox - interpeter for the lox programming language, written in C\n");

@@ -209,7 +209,7 @@ uint32_t Clox_Chunk_Print_Op_Code(Clox_Chunk* const chunk, uint32_t const offset
             Clox_Value_Print(chunk->constants.values[constant]);
             printf("\n");
 
-            Clox_Function* function = (Clox_Function*)(chunk->constants.values[constant].object);
+            Clox_Function* function = (Clox_Function*)(chunk->constants.values[constant].value.object);
             for (int j = 0; j < function->upvalue_count; j++) {
                 int isLocal = chunk->code[offset + (uint32_t)j*2];
                 int index = chunk->code[offset + (uint32_t)j*2 + 1];

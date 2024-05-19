@@ -1,5 +1,5 @@
 
-CFLAGS=-Wall -Wextra -Wconversion -Wpedantic -std=c11
+CFLAGS=-Wall -Wextra -Wconversion -Wpedantic -std=c99
 CFLAGS_DEBUG=-g -O0
 CFLAGS_RELEASE=-O3
 

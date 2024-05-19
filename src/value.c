@@ -46,13 +46,13 @@ void Clox_Value_Print(Clox_Value value) {
             printf("(nil)");
         } break;
         case CLOX_VALUE_TYPE_BOOL: {
-            printf("%s", value.boolean == true? "true": "false");
+            printf("%s", value.value.boolean == true? "true": "false");
         } break;
         case CLOX_VALUE_TYPE_NUMBER: {
-            printf("%g", value.number);
+            printf("%g", value.value.number);
         } break;
         case CLOX_VALUE_TYPE_OBJECT: {
-            Clox_Object_Print(value.object);
+            Clox_Object_Print(value.value.object);
         } break;
         default:
             CLOX_UNREACHABLE();
@@ -63,7 +63,7 @@ bool Clox_Value_Is_Falsy(Clox_Value value) {
     switch (value.type) {
 
         case CLOX_VALUE_TYPE_NIL: return true;
-        case CLOX_VALUE_TYPE_BOOL: return !value.boolean;
+        case CLOX_VALUE_TYPE_BOOL: return !value.value.boolean;
         case CLOX_VALUE_TYPE_NUMBER: /* fallthrough */ 
         case CLOX_VALUE_TYPE_OBJECT: {
             return false;

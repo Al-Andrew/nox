@@ -116,12 +116,12 @@ static bool Clox_VM_Call(Clox_VM* vm, Clox_Closure* callee, int argCount) {
 
 static bool Clox_VM_Call_Value(Clox_VM* vm, Clox_Value callee, int argCount) {
   if (CLOX_VALUE_IS_OBJECT(callee)) {
-    switch (callee.object->type) {
+    switch (callee.value.object->type) {
         case CLOX_OBJECT_TYPE_CLOSURE: {
-            return Clox_VM_Call(vm, (Clox_Closure*)callee.object, argCount);
+            return Clox_VM_Call(vm, (Clox_Closure*)callee.value.object, argCount);
         } break;
         case CLOX_OBJECT_TYPE_NATIVE: {
-            Clox_Native* native = (Clox_Native*)callee.object;
+            Clox_Native* native = (Clox_Native*)callee.value.object;
             Clox_Value result = native->function(argCount, vm->stack_top - argCount); // TODO(Al-Andrew): native functons can error out right?
             vm->stack_top -= argCount + 1;
             Clox_VM_Stack_Push(vm, result);
@@ -138,7 +138,7 @@ static bool Clox_VM_Call_Value(Clox_VM* vm, Clox_Value callee, int argCount) {
 void Clox_VM_Define_Native(Clox_VM* vm, const char* name, Clox_Native_Fn function) {
     Clox_VM_Stack_Push(vm, CLOX_VALUE_OBJECT(Clox_String_Create(vm, name, (uint32_t)strlen(name))));
     Clox_VM_Stack_Push(vm, CLOX_VALUE_OBJECT(Clox_Native_Create(vm, function)));
-    Clox_Hash_Table_Set(&vm->globals, (Clox_String*)vm->stack[0].object, vm->stack[1]);
+    Clox_Hash_Table_Set(&vm->globals, (Clox_String*)vm->stack[0].value.object, vm->stack[1]);
     Clox_VM_Stack_Pop(vm);
     Clox_VM_Stack_Pop(vm);
 }
@@ -157,7 +157,7 @@ Clox_Interpret_Result Clox_VM_Interpret_Function(Clox_VM* const vm, Clox_Functio
     #define READ_CONSTANT() \
         (frame->closure->function->chunk.constants.values[READ_BYTE()])
 
-    #define READ_STRING() ((Clox_String*)READ_CONSTANT().object)
+    #define READ_STRING() ((Clox_String*)READ_CONSTANT().value.object)
 
     for (;;) {
         
@@ -210,7 +210,7 @@ Clox_Interpret_Result Clox_VM_Interpret_Function(Clox_VM* const vm, Clox_Functio
                 CLOX_VM_ASSURE_STACK_CONTAINS_AT_LEAST(1);
                 CLOX_VM_ASSURE_STACK_TYPE_0(CLOX_VALUE_TYPE_NUMBER);
 
-                double value = Clox_VM_Stack_Pop(vm).number;
+                double value = Clox_VM_Stack_Pop(vm).value.number;
                 Clox_VM_Stack_Push(vm, CLOX_VALUE_NUMBER(-value));
             }break;
             case OP_BOOLEAN_NEGATION: {
@@ -221,7 +221,7 @@ Clox_Interpret_Result Clox_VM_Interpret_Function(Clox_VM* const vm, Clox_Functio
                     Clox_VM_Stack_Pop(vm); // pop the nil of the stack
                     Clox_VM_Stack_Push(vm, CLOX_VALUE_BOOL(true));
                 } else if (top_type == CLOX_VALUE_TYPE_BOOL) {
-                    bool value = Clox_VM_Stack_Pop(vm).boolean;
+                    bool value = Clox_VM_Stack_Pop(vm).value.boolean;
                     Clox_VM_Stack_Push(vm, CLOX_VALUE_BOOL(!value));
                 } else {
                     // TODO(Al-Andrew, Diagnostic): diagnostic
@@ -238,11 +238,11 @@ Clox_Interpret_Result Clox_VM_Interpret_Function(Clox_VM* const vm, Clox_Functio
                 }
 
                 if(CLOX_VALUE_IS_NUMBER(lhs) && CLOX_VALUE_IS_NUMBER(rhs)) {
-                    Clox_VM_Stack_Push(vm, CLOX_VALUE_NUMBER(lhs.number + rhs.number));
+                    Clox_VM_Stack_Push(vm, CLOX_VALUE_NUMBER(lhs.value.number + rhs.value.number));
                 }
-                else if((lhs.type == CLOX_VALUE_TYPE_OBJECT && lhs.object->type == CLOX_OBJECT_TYPE_STRING) && (rhs.type == CLOX_VALUE_TYPE_OBJECT && rhs.object->type == CLOX_OBJECT_TYPE_STRING)) {
-                    Clox_String* lhs_string = (Clox_String*)lhs.object;
-                    Clox_String* rhs_string = (Clox_String*)rhs.object;
+                else if((lhs.type == CLOX_VALUE_TYPE_OBJECT && lhs.value.object->type == CLOX_OBJECT_TYPE_STRING) && (rhs.type == CLOX_VALUE_TYPE_OBJECT && rhs.value.object->type == CLOX_OBJECT_TYPE_STRING)) {
+                    Clox_String* lhs_string = (Clox_String*)lhs.value.object;
+                    Clox_String* rhs_string = (Clox_String*)rhs.value.object;
 
                     // FIXME(Al-Andrwe): this is stupid
                     char* concat = reallocate(NULL, 0, lhs_string->length + rhs_string->length + 1);
@@ -264,8 +264,8 @@ Clox_Interpret_Result Clox_VM_Interpret_Function(Clox_VM* const vm, Clox_Functio
                 CLOX_VM_ASSURE_STACK_TYPE_1(CLOX_VALUE_TYPE_NUMBER);
 
 
-                double rhs = Clox_VM_Stack_Pop(vm).number;
-                double lhs = Clox_VM_Stack_Pop(vm).number;
+                double rhs = Clox_VM_Stack_Pop(vm).value.number;
+                double lhs = Clox_VM_Stack_Pop(vm).value.number;
                 Clox_VM_Stack_Push(vm, CLOX_VALUE_NUMBER(lhs - rhs));
             }break;
             case OP_MUL: {
@@ -274,8 +274,8 @@ Clox_Interpret_Result Clox_VM_Interpret_Function(Clox_VM* const vm, Clox_Functio
                 CLOX_VM_ASSURE_STACK_TYPE_1(CLOX_VALUE_TYPE_NUMBER);
 
 
-                double lhs = Clox_VM_Stack_Pop(vm).number;
-                double rhs = Clox_VM_Stack_Pop(vm).number;
+                double lhs = Clox_VM_Stack_Pop(vm).value.number;
+                double rhs = Clox_VM_Stack_Pop(vm).value.number;
                 Clox_VM_Stack_Push(vm, CLOX_VALUE_NUMBER(lhs * rhs));
             }break;
             case OP_DIV: {
@@ -284,8 +284,8 @@ Clox_Interpret_Result Clox_VM_Interpret_Function(Clox_VM* const vm, Clox_Functio
                 CLOX_VM_ASSURE_STACK_TYPE_1(CLOX_VALUE_TYPE_NUMBER);
 
 
-                double rhs = Clox_VM_Stack_Pop(vm).number;
-                double lhs = Clox_VM_Stack_Pop(vm).number;
+                double rhs = Clox_VM_Stack_Pop(vm).value.number;
+                double lhs = Clox_VM_Stack_Pop(vm).value.number;
                 Clox_VM_Stack_Push(vm, CLOX_VALUE_NUMBER(lhs / rhs));
             }break;
             case OP_EQUAL: {
@@ -303,17 +303,17 @@ Clox_Interpret_Result Clox_VM_Interpret_Function(Clox_VM* const vm, Clox_Functio
                         Clox_VM_Stack_Push(vm, CLOX_VALUE_BOOL(true));
                     } break;
                     case CLOX_VALUE_TYPE_BOOL: {
-                        Clox_VM_Stack_Push(vm, CLOX_VALUE_BOOL(lhs.boolean == rhs.boolean));
+                        Clox_VM_Stack_Push(vm, CLOX_VALUE_BOOL(lhs.value.boolean == rhs.value.boolean));
                     } break;
                     case CLOX_VALUE_TYPE_NUMBER: {
-                        Clox_VM_Stack_Push(vm, CLOX_VALUE_BOOL(lhs.number == rhs.number));
+                        Clox_VM_Stack_Push(vm, CLOX_VALUE_BOOL(lhs.value.number == rhs.value.number));
                     } break;
                     case CLOX_VALUE_TYPE_OBJECT: {
                         
-                        switch (lhs.object->type) {
+                        switch (lhs.value.object->type) {
                             case CLOX_OBJECT_TYPE_STRING: {
-                                Clox_String* lhs_string = (Clox_String*)lhs.object;
-                                Clox_String* rhs_string = (Clox_String*)rhs.object;
+                                Clox_String* lhs_string = (Clox_String*)lhs.value.object;
+                                Clox_String* rhs_string = (Clox_String*)rhs.value.object;
 
                                 bool result = s8_compare(
                                     (s8){
@@ -342,8 +342,8 @@ Clox_Interpret_Result Clox_VM_Interpret_Function(Clox_VM* const vm, Clox_Functio
                 CLOX_VM_ASSURE_STACK_TYPE_1(CLOX_VALUE_TYPE_NUMBER);
 
 
-                double rhs = Clox_VM_Stack_Pop(vm).number;
-                double lhs = Clox_VM_Stack_Pop(vm).number;
+                double rhs = Clox_VM_Stack_Pop(vm).value.number;
+                double lhs = Clox_VM_Stack_Pop(vm).value.number;
                 Clox_VM_Stack_Push(vm, CLOX_VALUE_BOOL(lhs > rhs));
             }break;
             case OP_LESS: {
@@ -352,8 +352,8 @@ Clox_Interpret_Result Clox_VM_Interpret_Function(Clox_VM* const vm, Clox_Functio
                 CLOX_VM_ASSURE_STACK_TYPE_1(CLOX_VALUE_TYPE_NUMBER);
 
 
-                double rhs = Clox_VM_Stack_Pop(vm).number;
-                double lhs = Clox_VM_Stack_Pop(vm).number;
+                double rhs = Clox_VM_Stack_Pop(vm).value.number;
+                double lhs = Clox_VM_Stack_Pop(vm).value.number;
                 Clox_VM_Stack_Push(vm, CLOX_VALUE_BOOL(lhs < rhs));
             }break;
             case OP_PRINT: {
@@ -428,7 +428,7 @@ Clox_Interpret_Result Clox_VM_Interpret_Function(Clox_VM* const vm, Clox_Functio
                 frame = &vm->frames[vm->call_frame_count - 1];
             } break;
             case OP_CLOSURE: {
-                Clox_Function* function = (Clox_Function*)(READ_CONSTANT().object);
+                Clox_Function* function = (Clox_Function*)(READ_CONSTANT().value.object);
                 Clox_Closure* closure = Clox_Closure_Create(vm, function);
                 Clox_VM_Stack_Push(vm, CLOX_VALUE_OBJECT(closure));
 
@@ -468,7 +468,7 @@ Clox_Interpret_Result Clox_VM_Interpret_Source(Clox_VM* vm, const char* source) 
         Clox_Function* top_level_function = Clox_Compile_Source_To_Function(vm, source); 
         if (top_level_function == NULL) {
             result.return_value = CLOX_VALUE_NIL;
-            result.status = INTERPRET_COMPILE_ERROR;            
+            result.status = INTERPRET_COMPILE_ERROR;
             break;
         }
 
